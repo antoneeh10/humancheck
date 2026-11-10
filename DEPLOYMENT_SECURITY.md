@@ -1,40 +1,40 @@
 # HumanCheck - Deployment & Security Documentation
 
-Dokumen ini berisi penjelasan komprehensif mengenai **Prosedur Deployment** dan **Tata Cara Kerja Keamanan** pada sistem CAPTCHA alternatif HumanCheck.
+This document provides a comprehensive explanation of the **Deployment Procedures** and **Security Mechanisms** implemented in the HumanCheck alternative CAPTCHA system.
 
 ---
 
-## 🚀 1. DOKUMENTASI DEPLOYMENT (Penyebaran)
+## 🚀 1. DEPLOYMENT DOCUMENTATION
 
-HumanCheck didesain dengan konsep **Full-Stack SPA + API Proxy Server** menggunakan kombinasi **Node.js + Express** dan **Vite (React + TypeScript)**. Aplikasi siap dideploy ke platform container modern seperti Google Cloud Run, Heroku, AWS ECS, VPS, maupun hosting Node lainnya.
+HumanCheck is designed using a **Full-Stack SPA + API Proxy Server** architecture, combining **Node.js + Express** and **Vite (React + TypeScript)**. The application is ready to be deployed on modern container platforms such as Google Cloud Run, Heroku, AWS ECS, VPS, and other Node.js hosting environments.
 
-### A. Persiapan Environment (.env)
-Buat file `.env` produksi dengan konfigurasi berikut:
+### A. Environment Preparation (.env)
+Create a production `.env` file with the following configuration:
 ```env
 # Port & Interface binding (HumanCheck default port: 3000)
 PORT=3000
 
-# Kunci rahasia global untuk penandatanganan token HMAC-SHA256
+# Global secret key for HMAC-SHA256 token signing
 SYSTEM_SECRET="hc_system_sec_misterius_dan_panjang_998877"
 
-# Mode Produksi
+# Production Mode
 NODE_ENV="production"
 ```
 
-### B. Langkah Kompilasi Lokal & Server
-1. **Instalasi Dependensi**: Run `npm install` untuk menginstal seluruh packages.
-2. **Kompilasi Kode (Build)**:
+### B. Local & Server Build Process
+1. **Dependency Installation**: Run `npm install` to install all required packages.
+2. **Code Compilation (Build)**:
    ```bash
    npm run build
    ```
-   *Proses ini akan menjalankan dua hal: mengompilasi Frontend SPA ke direktori `/dist` dan membundel backend `server.ts` menjadi file Node CommonJS tunggal `/dist/server.cjs` menggunakan esbuild.*
-3. **Menjalankan Server Produksi**:
+   *This process performs two operations: compiling the Frontend SPA into the `/dist` directory and bundling the backend `server.ts` into a single Node.js CommonJS file at `/dist/server.cjs` using esbuild.*
+3. **Starting the Production Server**:
    ```bash
    npm start
    ```
 
-### C. Deployment Menggunakan Docker (Google Cloud Run / Kubernetes)
-Gunakan konfigurasi `Dockerfile` berikut untuk deployment instan:
+### C. Docker Deployment (Google Cloud Run / Kubernetes)
+Use the following `Dockerfile` configuration for instant deployment:
 ```dockerfile
 FROM node:20-alpine
 
@@ -54,33 +54,38 @@ CMD ["npm", "start"]
 
 ---
 
-## 🔒 2. DOKUMENTASI KEAMANAN (Security Mechanisms)
+## 🔒 2. SECURITY DOCUMENTATION (Security Mechanisms)
 
-HumanCheck dibangun dengan fondasi privasi tinggi ("privacy-by-design") yang dikombinasikan dengan pembatasan anti-bot berlapis tanpa sedikitpun menginterfensi data pribadi atau menanam pelacak iklan pihak ketiga.
+HumanCheck is built on a high-privacy foundation ("privacy-by-design"), combined with multiple layers of anti-bot protection without interfering with personal data or installing third-party advertising trackers.
 
-### A. Analisis Perilaku Realtime (Behavior Heuristics)
-Deteksi bot dilakukan melalui empat parameter dinamis di sisi klien yang di-validasi ulang di sisi server:
-1. **Dinamika Kursor Mouse (Desktop)**:
-   * **Curvature (Kelengkungan Lintasan)**: Membandingkan posisi mouse (`x`, `y`) untuk mendeteksi apakah rute berbentuk garis lurus sempurna (linear) yang dicirikan oleh script automasi komputer. Gerakan tangan manusia selalu memiliki variasi kelengkungan/bengkok (splines).
-   * **Speed Variance**: Mengukur akselerasi dan deselerasi kursor. Gerak manual manusia memiliki kecepatan naik turun (akselerasi di tengah, deselerasi mendekati checkbox). Bot biasanya bergerak konstan.
-   * **Direction Jitters**: Mendeteksi jika terdapat koreksi posisi manual (jitter micro-shakes) yang wajar pada tangan manusia.
+### A. Real-Time Behavioral Analysis (Behavior Heuristics)
+Bot detection is performed through four dynamic client-side parameters, which are revalidated on the server side:
+
+1. **Mouse Cursor Dynamics (Desktop)**:
+   * **Curvature (Path Curvature)**: Compares mouse positions (`x`, `y`) to detect perfectly straight (linear) movement paths, which are commonly associated with computer automation scripts. Human hand movements naturally exhibit variations in curvature and direction (splines).
+   * **Speed Variance**: Measures cursor acceleration and deceleration. Human-controlled movements typically have varying speeds (acceleration in the middle and deceleration when approaching the checkbox). Bots tend to move at a constant speed.
+   * **Direction Jitters**: Detects natural manual position corrections (micro-shakes) commonly found in human hand movements.
+
 2. **Screen Timing Metrics**:
-   * Evaluasi waktu reaksi semenjak widget termuat hingga checkbox diklik. Klik dengan rentang waktu di bawah 400 milidetik langsung didegradasi skornya karena melebihi batasan sistem motorik manusia tercepat.
-3. **Sensorik Mobile Touch Event**:
-   * Mengintegrasikan pendeteksi sapuan jari (`swipe velocity`), sensor multi-touch, koordinat penekanan jari, dan penolakan emulator otomatis.
+   * Evaluates the reaction time between widget initialization and the checkbox click. Clicks performed in less than 400 milliseconds receive a reduced score because they fall below the system's expected human motor response threshold.
+
+3. **Mobile Touch Sensor Events**:
+   * Integrates finger swipe detection (`swipe velocity`), multi-touch sensors, finger press coordinates, and automatic emulator rejection.
+
 4. **Window Focus Environment**:
-   * Memastikan window browser berada dalam kondisi aktif/focus guna menangkal bot headless (seperti Puppeteer/Selenium) yang merender widget secara latar belakang (background headless execution).
+   * Ensures that the browser window is active and focused to help prevent headless bots (such as Puppeteer/Selenium) from rendering the widget in the background (background headless execution).
 
-### B. Verifikasi Token HMAC SHA256 (Anti-Counterfeiting)
-Mencegah pembuatan token valid buatan lokal secara ilegal:
-* Token dikonstruksi dari payload JSON: `siteKey`, `score`, `hostname`, `timestamp`, `ip`, dan `nonce`.
-* Payload di-encode menggunakan Base64 dan ditandatangani menggunakan algoritma kriptografi satu arah **HMAC SHA-256** menggunakan kunci gabungan: `Site Secret Key + System Secret Key`.
-* Server target memanggil `POST /api/siteverify` untuk mengirimkan token tersebut. Server HumanCheck mendekode token dan memvalidasi keabsahan tanda tangan secara asimetris, menjamin tidak ada token yang dipalsukan.
+### B. HMAC SHA256 Token Verification (Anti-Counterfeiting)
+Prevents the unauthorized local generation of valid tokens:
 
-### C. Proteksi Serangan Replay (Anti Replay Attack)
-* **Token Expiration**: Token verifikasi hanya memiliki masa tenggang hidup selama **2 menit (120 detik)** sejak dikeluarkan. Pembatasan umur token mempersempit jendela eksploitasi serangan siber.
-* **Nonce Cache Validation**: Setiap token berisikan sebuah kunci acak unik sekali-pakai (`nonce`). Ketika proses pemanggilan `/api/siteverify` dipicu, server akan menyimpan `nonce` tersebut ke dalam memori tertulis. Apabila ada pelaku siber melakukan pengiriman token yang sama berulang kali, server akan menolaknya dengan error `timeout-or-duplicate`.
+* Tokens are constructed from a JSON payload containing: `siteKey`, `score`, `hostname`, `timestamp`, `ip`, and `nonce`.
+* The payload is Base64-encoded and signed using the one-way cryptographic algorithm **HMAC SHA-256**, with a combined key consisting of the `Site Secret Key + System Secret Key`.
+* The target server sends the token through `POST /api/siteverify`. The HumanCheck server decodes the token and validates its cryptographic signature, ensuring that forged tokens are rejected.
 
-### D. Keamanan Origin Domain (Anti Key Theft Tracker)
-* Kunci publik (`SITE_KEY`) dapat dibaca secara bebas di halaman HTML klien. Guna mencegah pihak tak bertanggung jawab menyalin kunci tersebut dan memakainya di website mereka sendiri, HumanCheck menguji asal domain (`originHostname`).
-* Server mencocokkan asal domain pengaju verifikasi dengan daftar domain sah yang ditentukan oleh developer di dashboard portal. Jika domain tidak terdaftar, token verifikasi dinyatakan tidak sah (`invalid-domain`).
+### C. Replay Attack Protection (Anti Replay Attack)
+* **Token Expiration**: Verification tokens have a limited validity period of **2 minutes (120 seconds)** from the time they are issued. This expiration policy reduces the window of opportunity for potential cyber exploitation.
+* **Nonce Cache Validation**: Each token contains a unique, single-use random key (`nonce`). When a request to `/api/siteverify` is triggered, the server stores the `nonce` in memory. If an attacker attempts to submit the same token repeatedly, the server rejects subsequent requests with the `timeout-or-duplicate` error.
+
+### D. Domain Origin Security (Anti Key Theft Tracker)
+* The public key (`SITE_KEY`) can be freely accessed from the client-side HTML page. To prevent unauthorized parties from copying the key and using it on their own websites, HumanCheck validates the request's origin domain (`originHostname`).
+* The server compares the origin domain of the verification request against the list of authorized domains configured by the developer in the dashboard portal. If the domain is not registered, the verification token is considered invalid (`invalid-domain`).
