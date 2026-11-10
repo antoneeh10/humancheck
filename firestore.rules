@@ -1,0 +1,27 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Catch-all default deny
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Since our custom database sits in Node server using the Client SDK, 
+    // it executes as an unauthenticated system. We allow database operations on our specified collections:
+    match /developers/{developerId} {
+      allow read, write: if true;
+    }
+    
+    match /passwords/{developerId} {
+      allow read, write: if true;
+    }
+    
+    match /siteKeys/{siteKeyId} {
+      allow read, write: if true;
+    }
+    
+    match /logs/{logId} {
+      allow read, write: if true;
+    }
+  }
+}

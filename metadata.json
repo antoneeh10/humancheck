@@ -1,0 +1,6 @@
+{
+  "name": "HumanCheck",
+  "description": "Sistem CAPTCHA modern tanpa AI yang mengandalkan analisis perilaku pengguna secara realtime dengan dashboard developer dan dokumentasi lengkap.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

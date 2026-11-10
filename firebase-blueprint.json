@@ -1,0 +1,122 @@
+{
+  "entities": {
+    "Developer": {
+      "title": "Developer",
+      "description": "User profile of the registered developer",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The unique ID of the developer"
+        },
+        "email": {
+          "type": "string",
+          "format": "email",
+          "description": "The email of of the developer"
+        },
+        "name": {
+          "type": "string",
+          "description": "The company name or display name of the developer"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "The generation timestamp"
+        }
+      },
+      "required": ["id", "email", "name", "createdAt"]
+    },
+    "SiteKey": {
+      "title": "SiteKey",
+      "description": "A specific security domain origin configuration key",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "The unique site key delivered to client"
+        },
+        "secretKey": {
+          "type": "string",
+          "description": "The private HMAC secret for server validation"
+        },
+        "developerId": {
+          "type": "string",
+          "description": "The developer UID owner"
+        },
+        "name": {
+          "type": "string",
+          "description": "The nickname of the website"
+        },
+        "domains": {
+          "type": "array",
+          "description": "Allowed hostnames"
+        },
+        "theme": {
+          "type": "string",
+          "enum": ["light", "dark"],
+          "description": "The design theme selected"
+        },
+        "compact": {
+          "type": "boolean",
+          "description": "True if compact layout is preferred"
+        },
+        "scoreThreshold": {
+          "type": "number",
+          "description": "Passing grade (such as 70)"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["id", "secretKey", "developerId", "name", "domains", "theme", "compact", "scoreThreshold", "createdAt"]
+    },
+    "CaptchaLog": {
+      "title": "CaptchaLog",
+      "description": "Activity track of single captcha trial",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "siteKey": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "score": {
+          "type": "number"
+        },
+        "success": {
+          "type": "boolean"
+        },
+        "hostname": {
+          "type": "string"
+        },
+        "ip": {
+          "type": "string"
+        },
+        "device": {
+          "type": "string"
+        }
+      },
+      "required": ["id", "siteKey", "timestamp", "score", "success", "hostname", "ip", "device"]
+    }
+  },
+  "firestore": {
+    "/developers/{developerId}": {
+      "schema": "Developer",
+      "description": "Developer profile documents"
+    },
+    "/siteKeys/{siteKeyId}": {
+      "schema": "SiteKey",
+      "description": "Site configurations documents"
+    },
+    "/logs/{logId}": {
+      "schema": "CaptchaLog",
+      "description": "Validation attempt records"
+    }
+  }
+}
